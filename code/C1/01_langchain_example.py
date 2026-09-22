@@ -18,7 +18,10 @@ loader = UnstructuredMarkdownLoader(markdown_path)
 docs = loader.load()
 
 # 文本分块
-text_splitter = RecursiveCharacterTextSplitter()
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=500,
+    chunk_overlap=100
+)
 chunks = text_splitter.split_documents(docs)
 
 # 中文嵌入模型
@@ -52,7 +55,7 @@ llm = ChatOpenAI(
     model="glm-4.7-flash-free",
     temperature=0.7,
     max_tokens=4096,
-    api_key=os.getenv("DEEPSEEK_API_KEY"),
+    api_key=os.getenv("AIHUBMIX_API_KEY"),
     base_url="https://aihubmix.com/v1"
 )
 
@@ -72,4 +75,11 @@ retrieved_docs = vectorstore.similarity_search(question, k=3)
 docs_content = "\n\n".join(doc.page_content for doc in retrieved_docs)
 
 answer = llm.invoke(prompt.format(question=question, context=docs_content))
-print(answer)
+print(answer.content)
+
+print(f"切分后的 Chunk 数量：{len(chunks)}")
+
+for i, chunk in enumerate(chunks[:5]):
+    print(f"\n===== Chunk {i + 1} =====")
+    print(chunk.page_content)
+    print(f"长度：{len(chunk.page_content)}")
